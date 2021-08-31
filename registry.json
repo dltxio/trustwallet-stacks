@@ -1729,7 +1729,7 @@
     "publicKeyType": "secp256k1",
     "explorer": {
       "url": "https://explorer.stacks.co",
-      "txPath": "/transactions/",
+      "txPath": "/txid/",
       "accountPath": "/address/"
     },
     "info": {
