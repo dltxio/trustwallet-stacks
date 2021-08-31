@@ -27,8 +27,8 @@ TEST(TWStacksCoinType, TWCoinType) {
     ASSERT_EQ(0x0, TWCoinTypeP2shPrefix(TWCoinTypeStacks));
     ASSERT_EQ(0x0, TWCoinTypeStaticPrefix(TWCoinTypeStacks));
     assertStringsEqual(symbol, "STX");
-    assertStringsEqual(txUrl, "https://explorer.stacks.co/txid/0x65f89adcacd272f07d198e09d5c9da8a749dd84e3b7f3c95118ce8858e359b3d");
-    assertStringsEqual(accUrl, "https://explorer.stacks.co/address/SP30EF9XFSX2XC5BH2KJ6EQAP6RPX71JC1K5RQ0N2?chain=mainnet");
+    assertStringsEqual(txUrl, "https://explorer.stacks.co/txid/65f89adcacd272f07d198e09d5c9da8a749dd84e3b7f3c95118ce8858e359b3d");
+    assertStringsEqual(accUrl, "https://explorer.stacks.co/address/SP30EF9XFSX2XC5BH2KJ6EQAP6RPX71JC1K5RQ0N2");
     assertStringsEqual(id, "stacks");
     assertStringsEqual(name, "Stacks");
 }
