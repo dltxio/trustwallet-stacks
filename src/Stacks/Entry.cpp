@@ -5,6 +5,7 @@
 // file LICENSE at the root of the source code distribution tree.
 
 #include "Entry.h"
+#include "Address.h"
 
 using namespace TW::Stacks;
 using namespace std;
@@ -12,13 +13,11 @@ using namespace std;
 // Note: avoid business logic from here, rather just call into classes like Address, Signer, etc.
 
 bool Entry::validateAddress(TWCoinType coin, const string& address, TW::byte, TW::byte, const char*) const {
-    // TODO: implement
-    return true;
+    return Address::isValid(address);
 }
 
 string Entry::deriveAddress(TWCoinType coin, const PublicKey& publicKey, TW::byte, const char*) const {
-    // TODO: implement
-    return std::string();
+    return Address(publicKey).string();
 }
 
 void Entry::sign(TWCoinType coin, const TW::Data& dataIn, TW::Data& dataOut) const {
