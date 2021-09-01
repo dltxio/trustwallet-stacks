@@ -32,7 +32,7 @@ bool Address::isValid(const std::string& string) {
     replace_all(normalise, "I", "1");
     Data decoded;
 
-    if (!Base32::decode(normalise, &decoded, BASE32_ALPHABET_CROCKFORD)) {
+    if (!Base32::decode(normalise, decoded, BASE32_ALPHABET_CROCKFORD)) {
         return false;
     }
 
