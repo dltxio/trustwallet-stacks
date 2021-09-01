@@ -17,8 +17,8 @@ class Address {
   private:
     static const char* BASE32_ALPHABET_CROCKFORD;
   
-    // 56 character base-32 encoded string
-    static const size_t size = 56;
+    // 41 character base-32 encoded string
+    static const size_t size = 41;
 
     // Hash size
     static const size_t hashSize = 20;
