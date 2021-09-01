@@ -20,6 +20,9 @@ class Address {
     // 41 character base-32 encoded string
     static const size_t size = 41;
 
+    // Decodes to 25 bytes
+    static const size_t rawSize = 25;
+
     // Hash size
     static const size_t hashSize = 20;
 

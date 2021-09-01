@@ -15,6 +15,10 @@
 #include <array>
 #include <cassert>
 
+// TODO: Remove the next 2 lines -- used for debugging only
+#include <iostream>
+using namespace std;
+
 using namespace TW::Stacks;
 using namespace boost::algorithm;
 
@@ -32,17 +36,16 @@ bool Address::isValid(const std::string& string) {
     replace_all(normalise, "I", "1");
     Data decoded;
 
-    if (!Base32::decode(normalise, decoded, BASE32_ALPHABET_CROCKFORD)) {
+    // Decode base32 from public key hash hex string (after 1 byte)
+    if (!Base32::decode(normalise.substr(2), decoded, BASE32_ALPHABET_CROCKFORD)) {
         return false;
     }
 
-    memzero(decoded.data(), decoded.size());
-    return true;
-    // TODO implement checksum verification.
-
-    // ... and that checksums match
-    uint16_t checksum_expected = Crc::crc16(decoded.data(), 34);
-    uint16_t checksum_actual = static_cast<uint16_t>((decoded[35] << 8) | decoded[34]); // unsigned short (little endian)
+    // Verify that checksums match.
+    uint16_t checksum_expected = Crc::crc16(decoded.data(), rawSize);
+    cout << "expected checksum: " << checksum_expected << endl;
+    uint16_t checksum_actual = static_cast<uint16_t>((decoded[rawSize] << 8) | decoded[rawSize - 1]); // unsigned short (little endian)
+    cout << "checksum actual: " << checksum_actual << endl;
     if (checksum_expected != checksum_actual) {
         return false;
     }
