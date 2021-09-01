@@ -1716,5 +1716,27 @@
       "clientPublic": "https://rpc.xdaichain.com",
       "clientDocs": "https://eth.wiki/json-rpc/API"
     }
+  },
+  {
+    "id": "stacks",
+    "name": "Stacks",
+    "coinId": 5757,
+    "symbol": "STX",
+    "decimals": 8,
+    "blockchain": "Stacks",
+    "derivationPath": "m/44'/5757'/0'/0/0",
+    "curve": "secp256k1",
+    "publicKeyType": "secp256k1",
+    "explorer": {
+      "url": "https://explorer.stacks.co",
+      "txPath": "/txid/",
+      "accountPath": "/address/"
+    },
+    "info": {
+      "url": "https://www.stacks.co",
+      "source": "https://github.com/blockstack",
+      "rpc": "https://stacks-node-api.mainnet.stacks.co",
+      "documentation": "https://docs.stacks.co"
+    }
   }
 ]
