@@ -7,7 +7,7 @@
 #include "Address.h"
 #include "../Base32.h"
 #include "../HexCoding.h"
-#include "Crc.h"
+#include "../Crc.h"
 
 #include <boost/algorithm/string.hpp>
 #include <TrezorCrypto/memzero.h>
@@ -21,34 +21,34 @@ using namespace boost::algorithm;
 const char* Address::BASE32_ALPHABET_CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
 bool Address::isValid(const std::string& string) {
-    bool valid = false;
-
     if (string.length() != size) {
         return false;
     }
 
     // Check that it decodes correctly
-    Data decoded;
     auto normalise = to_upper_copy(string);
-    replace_all(normalise, "O", "0"); 
-    replace_all(normalise, "L", "1"); 
-    replace_all(normalise, "I", "1"); 
-    valid = Base32::decode(normalise, decoded, BASE32_ALPHABET_CROCKFORD);
+    replace_all(normalise, "O", "0");
+    replace_all(normalise, "L", "1");
+    replace_all(normalise, "I", "1");
+    Data decoded;
 
-    // ... and that version byte is 0x30
-    if (!valid) { // !!
-        valid = false;
+    if (!Base32::decode(normalise, &decoded, BASE32_ALPHABET_CROCKFORD)) {
+        return false;
     }
+
+    memzero(decoded.data(), decoded.size());
+    return true;
+    // TODO implement checksum verification.
 
     // ... and that checksums match
     uint16_t checksum_expected = Crc::crc16(decoded.data(), 34);
     uint16_t checksum_actual = static_cast<uint16_t>((decoded[35] << 8) | decoded[34]); // unsigned short (little endian)
-    if (valid && checksum_expected != checksum_actual) {
-        valid = false;
+    if (checksum_expected != checksum_actual) {
+        return false;
     }
 
     memzero(decoded.data(), decoded.size());
-    return valid;
+    return true;
 }
 
 Address::Address(const std::string& string) {
