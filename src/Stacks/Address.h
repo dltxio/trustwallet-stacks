@@ -30,17 +30,19 @@ class Address {
     static TW::Data deconstruct(const std::string& string);
 
   public:
+    static const TW::byte VersionMainnetP2PKH = 22;
+
     /// Address data consisting of prefix plus public key hash.
     std::array<byte, bytesSize> bytes;
     
     /// Determines whether a string makes a valid address.
-    static bool isValid(const std::string& string);
+    static bool isValid(const std::string& string, const std::vector<TW::byte>& validPrefixes = {});
 
     /// Initializes a Stacks address with a string representation.
     explicit Address(const std::string& string);
 
     /// Initializes a Stacks address with a public key.
-    explicit Address(const PublicKey& publicKey);
+    explicit Address(const PublicKey& publicKey, TW::byte prefixa = VersionMainnetP2PKH);
 
     /// Returns a string representation of the address.
     std::string string() const;

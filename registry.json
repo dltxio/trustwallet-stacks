@@ -1727,6 +1727,8 @@
     "derivationPath": "m/44'/5757'/0'/0/0",
     "curve": "secp256k1",
     "publicKeyType": "secp256k1",
+    "p2pkhPrefix": 22,
+    "p2psPrefix": 20,
     "explorer": {
       "url": "https://explorer.stacks.co",
       "txPath": "/txid/",

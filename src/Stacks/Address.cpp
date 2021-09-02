@@ -1,4 +1,4 @@
-// Copyright © 2017-2020 Trust Wallet.
+// Copyright © 2017-2021 Trust Wallet
 //
 // This file is part of Trust. The full Trust copyright notice, including
 // terms governing use, modification, and redistribution, is contained in the
@@ -42,8 +42,9 @@ TW::Data Address::deconstruct(const std::string& string) {
     return Data(data.begin(), data.begin() + bytesSize);
 }
 
-bool Address::isValid(const std::string& string) {
-    return deconstruct(string).size();
+bool Address::isValid(const std::string& string, const std::vector<TW::byte>& validPrefixes) {
+    auto data = deconstruct(string);
+    return data.size() && (!validPrefixes.size() || std::find(validPrefixes.begin(), validPrefixes.end(), data[0]) != validPrefixes.end()); 
 }
 
 Address::Address(const std::string& string) {
@@ -55,13 +56,13 @@ Address::Address(const std::string& string) {
     std::copy(data.begin(), data.end(), bytes.begin());
 }
 
-Address::Address(const PublicKey& publicKey) {
+Address::Address(const PublicKey& publicKey, TW::byte prefix) {
     if (publicKey.type != TWPublicKeyTypeSECP256k1) {
         throw std::invalid_argument("Invalid public key type");
     }
     auto data = publicKey.hash({}, Hash::sha256ripemd);
     std::copy(data.begin(), data.end(), bytes.begin() + 1);
-    bytes[0] = 26;
+    bytes[0] = prefix;
 }
 
 std::string Address::string() const {
