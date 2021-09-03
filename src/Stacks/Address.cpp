@@ -10,7 +10,6 @@
 #include "../Crc.h"
 
 #include <boost/algorithm/string.hpp>
-
 #include <array>
 
 using namespace TW::Stacks;
@@ -19,13 +18,17 @@ using namespace boost::algorithm;
 const char* Address::BASE32_ALPHABET_CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
 TW::Data Address::deconstruct(const std::string& string) {
-    if (string.length() != size) {
+    if ((string.length() < (checksumSize + 2)) || (string.length() > size)) {
         return {};
     }
 
     // Check that it decodes correctly
     Data data;
     auto normalise = to_upper_copy(string);
+    auto pad = size - normalise.length();
+    if (pad) {
+        normalise.insert(2, std::string(pad, '0'));
+    }
     replace_all(normalise, "O", "0");
     replace_all(normalise, "L", "1");
     replace_all(normalise, "I", "1");
@@ -66,9 +69,16 @@ Address::Address(const PublicKey& publicKey, TW::byte prefix) {
 }
 
 std::string Address::string() const {
+    static_assert((8 * (bytesSize + checksumSize)) % 5 == 0);
     auto data = Data(bytes.begin(), bytes.end());
     auto checksum = Hash::sha256(Hash::sha256(data));
     data.insert(data.end(), checksum.begin(), checksum.begin() + checksumSize);
-    data[0] <<= 3;
-    return std::string("S") + Base32::encode(data, BASE32_ALPHABET_CROCKFORD);
+    TW::byte prefix = data[0] << 3;
+    data[0] = 0;
+    auto encoded = Base32::encode(data, BASE32_ALPHABET_CROCKFORD);
+    encoded.erase(0, encoded.find_first_not_of('0'));
+    for (int i = 1; i < data.size() && !data[i]; i++) {
+       encoded.insert(0, "0");
+    }
+    return std::string("S") + Base32::encode({prefix}, BASE32_ALPHABET_CROCKFORD)[0] + encoded;
 }
