@@ -10,6 +10,7 @@
 #include "../PublicKey.h"
 
 #include <string>
+#include <vector>
 
 namespace TW::Stacks {
 
@@ -17,25 +18,31 @@ class Address {
   private:
     static const char* BASE32_ALPHABET_CROCKFORD;
   
-    // 56 character base-32 encoded string
-    static const size_t size = 56;
+    // Size of base-32 encoded address string.
+    static const size_t size = 41;
 
-    // Hash size
-    static const size_t hashSize = 20;
+    // Size of prefix plus public key hash.
+    static const size_t bytesSize = 21;
+
+    // Size of checksum.
+    static const size_t checksumSize = 4;
+
+    static TW::Data deconstruct(const std::string& string);
 
   public:
-    /// Address data consisting of a prefix byte followed by the public key
-    /// hash.
-    std::array<byte, hashSize> bytes;
+    static const TW::byte VersionMainnetP2PKH = 22;
 
-    /// Determines whether a string makes a valid  address.
-    static bool isValid(const std::string& string);
+    /// Address data consisting of prefix plus public key hash.
+    std::array<byte, bytesSize> bytes;
+    
+    /// Determines whether a string makes a valid address.
+    static bool isValid(const std::string& string, const std::vector<TW::byte>& validPrefixes = {});
 
-    /// Initializes a Stellar address with a string representation.
+    /// Initializes a Stacks address with a string representation.
     explicit Address(const std::string& string);
 
-    /// Initializes a Stellar address with a public key.
-    explicit Address(const PublicKey& publicKey);
+    /// Initializes a Stacks address with a public key.
+    explicit Address(const PublicKey& publicKey, TW::byte prefixa = VersionMainnetP2PKH);
 
     /// Returns a string representation of the address.
     std::string string() const;
