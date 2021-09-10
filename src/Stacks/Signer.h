@@ -18,8 +18,16 @@ public:
     /// Hide default constructor
     Signer() = delete;
 
+    explicit Signer(const Proto::SigningInput& input): input(input) {}
+
+    TW::Data sign() const noexcept;
+
     /// Signs a Proto::SigningInput transaction
     static Proto::SigningOutput sign(const Proto::SigningInput& input) noexcept;
+
+private:
+    Proto::SigningInput input;
+
 };
 
 } // namespace TW::Stacks

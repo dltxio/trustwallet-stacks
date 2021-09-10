@@ -4,20 +4,19 @@ package TW.Stacks.Proto;
 option java_package = "wallet.core.jni.proto";
 
 message MessageSignature {
-    uint32 type = 1; // enum equal to StacksMessageType.MessageSignature
-    string data = 2;
+    bytes data = 1;
+}
+
+message SingleSigSpendingCondition {
+    uint32 hashMode = 1; // enum
+    bytes signer = 2;
+    uint64 nonce = 3;
+    uint64 fee = 4;
+    uint32 keyEncoding = 5; // enum
+    MessageSignature signature = 6;
 }
 
 message SpendingCondition {
-    message SingleSigSpendingCondition {
-        uint32 hashMode = 1; // enum
-        string signer = 2;
-        uint64 nonce = 3;
-        uint64 fee = 4;
-        uint32 keyEncoding = 5; // enum
-        MessageSignature signature = 6;
-    }
-
     oneof spending_oneof {
         SingleSigSpendingCondition single = 1;
     }
@@ -29,30 +28,44 @@ message Authorization {
 }
 
 message Address {
-    uint32 type = 1; // enum equal to StacksMessageType.Address
-    uint32 version = 2;
-    string hash160 = 3;
+    uint32 version = 1;
+    bytes hash160 = 2;
+}
+
+message LengthPrefixedString {
+    string content = 1;
+    uint32 lengthPrefixBytes = 2;
+    uint32 maxLengthBytes = 3;
 }
 
 message StandardPrincipalCV {
-    uint32 type = 1; // enum equal to ClarityType.PrincipalStandard
-    Address address = 2;
+    Address address = 1;
+}
+
+message ContractPrincipalCV {
+    Address address = 1;
+    LengthPrefixedString contractName = 2;
+}
+
+message PrincipalCV {
+    oneof cv_oneof {
+        StandardPrincipalCV standard = 1;
+        ContractPrincipalCV contract = 2;
+    }
 }
 
 message MemoString {
-    uint32 type = 1; // enum equal to StacksMessageType.MemoString
-    string content = 2;
+    string content = 1;
+}
+
+message TokenTransferPayload {
+    uint32 payloadType = 1; // enum equal to PayloadType.TokenTransfer
+    PrincipalCV recipient = 2;
+    int64 amount = 3;
+    MemoString memo = 4;
 }
 
 message Payload {
-    message TokenTransferPayload {
-        uint32 type = 1; // enum equal to StacksMessageType.Payload
-        uint32 payloadType = 2; // enum equal to PayloadType.TokenTransfer
-        StandardPrincipalCV recipient = 3;
-        int64 amount = 4;
-        MemoString memo = 5;
-    }
-
     oneof payload_oneof {
         TokenTransferPayload transfer = 1;
     }
@@ -71,9 +84,8 @@ message TokenTransferOptions {
     int64 amount = 2;
     int64 fee = 3;
     int64 nonce = 4;
-    uint32 network = 5; // enum
-    uint32 anchorMode = 6; // enum
-    string memo = 7;
+    uint32 anchorMode = 5; // enum
+    string memo = 6;
 }
 
 message UnsignedTokenTransferOptions {
