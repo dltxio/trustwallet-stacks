@@ -21,14 +21,13 @@ using namespace TW::Stacks;
 TEST(StacksSigner, sign) {
     auto input = Proto::SigningInput();
     auto transfer = input.mutable_tokentransfer();
-    auto common = transfer->mutable_common();
     transfer->set_senderkey("edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc");
-    common->set_recipient("SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159");
-    common->set_amount(12345);
-    common->set_fee(0);
-    common->set_nonce(0);
-    common->set_anchormode(3);
-    common->set_memo("test memo");
+    transfer->set_recipient("SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159");
+    transfer->set_amount(12345);
+    transfer->set_fee(0);
+    transfer->set_nonce(0);
+    transfer->set_anchormode(3);
+    transfer->set_memo("test memo");
 
     const auto signer = Signer(input);
 

@@ -169,38 +169,38 @@ Proto::SigningOutput Signer::sign(const Proto::SigningInput& input) noexcept {
 }
 
 Data Signer::sign() const noexcept {
+    Proto::StacksTransaction tx;
     if (input.has_tokentransfer()) {
-	Proto::StacksTransaction tx;
-	auto senderKey = PrivateKey(parse_hex(input.tokentransfer().senderkey()));
+	auto tokenTransfer = input.tokentransfer();
+	auto senderKey = PrivateKey(parse_hex(tokenTransfer.senderkey()));
         auto senderAddress = Address(senderKey.getPublicKey(TWPublicKeyTypeSECP256k1));
         tx.set_version(MAINNET_TRANSACTION_VERSION);
         tx.set_chainid(MAINNET_CHAIN_ID);
-	auto transferCommon = input.tokentransfer().common();
-        if (std::find(ANCHORMODE.begin(), ANCHORMODE.end(), transferCommon.anchormode()) != ANCHORMODE.end()) {
+        if (std::find(ANCHORMODE.begin(), ANCHORMODE.end(), tokenTransfer.anchormode()) == ANCHORMODE.end()) {
+            throw std::exception();
 	}
-        tx.set_anchormode(transferCommon.anchormode());
+        tx.set_anchormode(tokenTransfer.anchormode());
 	auto auth = tx.mutable_auth();
 	auth->set_authtype(AUTHTYPE_STANDARD);
 	auto spending = auth->mutable_spendingcondition()->mutable_single();
 	spending->set_hashmode(ADDRESSHASHMODE_SERIALIZEP2PKH);
 	spending->set_signer(&senderAddress.bytes[1], senderAddress.bytes.size() - 1);
-	spending->set_nonce(transferCommon.nonce());
-	spending->set_fee(transferCommon.fee());
+	spending->set_nonce(tokenTransfer.nonce());
+	spending->set_fee(tokenTransfer.fee());
 	spending->set_keyencoding(PUBKEYENCODING_COMPRESSED);
 	auto transfer = tx.mutable_payload()->mutable_transfer();
 	auto address = transfer->mutable_recipient()->mutable_standard()->mutable_address();
-	auto recipientAddress = Address(transferCommon.recipient());
+	auto recipientAddress = Address(tokenTransfer.recipient());
 	address->set_version(recipientAddress.bytes[0]);
 	address->set_hash160(&recipientAddress.bytes[1], recipientAddress.bytes.size() - 1);
         transfer->set_payloadtype(PAYLOADTYPE_TOKENTRANSFER);
-	transfer->set_amount(transferCommon.amount());
+	transfer->set_amount(tokenTransfer.amount());
 	auto memo = transfer->mutable_memo();
-	memo->set_content(transferCommon.memo());
-	auto result = serialize(tx);
-	for (int i = 0; i < result.size(); i++)
-            std::cout << std::setfill('0') << std::setw(2) << std::hex << (int)result[i];
-	std::cout << std::endl;
-	return result;
+	memo->set_content(tokenTransfer.memo());
     }
-    return {};
+    auto result = serialize(tx);
+    for (int i = 0; i < result.size(); i++)
+        std::cout << std::setfill('0') << std::setw(2) << std::hex << (int)result[i];
+    std::cout << std::endl;
+    return result;
 }
