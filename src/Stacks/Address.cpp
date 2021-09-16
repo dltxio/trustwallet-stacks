@@ -60,7 +60,7 @@ Address::Address(const std::string& string) {
 }
 
 Address::Address(const PublicKey& publicKey, TW::byte prefix) {
-    if (publicKey.type != TWPublicKeyTypeSECP256k1) {
+    if ((publicKey.type != TWPublicKeyTypeSECP256k1) && (publicKey.type != TWPublicKeyTypeSECP256k1Extended)) {
         throw std::invalid_argument("Invalid public key type");
     }
     auto data = publicKey.hash({}, Hash::sha256ripemd);

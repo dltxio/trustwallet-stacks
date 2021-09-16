@@ -10,6 +10,8 @@
 #include "../PrivateKey.h"
 #include "../proto/Stacks.pb.h"
 
+#include <tuple>
+
 namespace TW::Stacks {
 
 /// Helper class that performs Stacks transaction signing.
@@ -28,6 +30,11 @@ public:
 private:
     Proto::SigningInput input;
 
+    Proto::StacksTransaction generate() const;
+
+    std::tuple<PrivateKey, TWPublicKeyType> getKey() const;
+
+    void sign(Proto::StacksTransaction& tx) const;
 };
 
 } // namespace TW::Stacks

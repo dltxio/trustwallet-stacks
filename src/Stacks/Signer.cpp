@@ -6,6 +6,7 @@
 
 #include "Signer.h"
 #include "Address.h"
+#include "../Hash.h"
 #include "../PublicKey.h"
 #include "../PrivateKey.h"
 #include "../BinaryCoding.h"
@@ -37,9 +38,12 @@ static const auto PAYLOADTYPE_TOKENTRANSFER = 0x00;
 
 static const auto POSTCONDITIONMODE_DENY = 0x02;
 
-static const auto PUBKEYENCODING_COMPRESSED = 0x01;
+static const auto PUBKEYENCODING_COMPRESSED = 0x00;
+static const auto PUBKEYENCODING_UNCOMPRESSED = 0x01;
 
 static const auto RECOVERABLE_ECSDA_SIG_LENGTH_BYTES = 65;
+
+static const auto PRIVATE_KEY_LENGTH = 32;
 
 Data serialize(const Proto::MessageSignature& signature) {
     auto data = signature.data();
@@ -61,7 +65,7 @@ Data serialize(const Proto::SingleSigSpendingCondition& spending) {
 
 Data serialize(const Proto::SpendingCondition& spending) {
     if (!spending.has_single()) {
-	throw std::exception(); // !!
+        throw std::exception(); // !!
     }
     return serialize(spending.single());
 }
@@ -168,39 +172,88 @@ Proto::SigningOutput Signer::sign(const Proto::SigningInput& input) noexcept {
     return output;
 }
 
-Data Signer::sign() const noexcept {
+void dump(const Data& data) {
+    for (int i = 0; i < data.size(); i++)
+        std::cout << std::setfill('0') << std::setw(2) << std::hex << (int)data[i];
+    std::cout << std::endl;
+}
+
+std::tuple<PrivateKey, TWPublicKeyType> Signer::getKey() const {
+    auto senderKey = input.senderkey();
+    auto keyType = TWPublicKeyTypeSECP256k1;
+    if ((senderKey.size() == (PRIVATE_KEY_LENGTH + 1)) && (senderKey.back() == 0x01)) {
+        keyType = TWPublicKeyTypeSECP256k1Extended;
+        senderKey.pop_back();
+    }
+    else if (senderKey.size() != PRIVATE_KEY_LENGTH) {
+        throw std::invalid_argument("Invalid private key format"); 
+    }
+    return std::make_tuple(PrivateKey(senderKey), keyType);
+}
+
+Proto::StacksTransaction Signer::generate() const {
     Proto::StacksTransaction tx;
     if (input.has_tokentransfer()) {
-	auto tokenTransfer = input.tokentransfer();
-	auto senderKey = PrivateKey(parse_hex(tokenTransfer.senderkey()));
-        auto senderAddress = Address(senderKey.getPublicKey(TWPublicKeyTypeSECP256k1));
+        auto tokenTransfer = input.tokentransfer();
+        auto[privateKey, keyType] = getKey();
+        auto senderAddress = Address(privateKey.getPublicKey(keyType));
+        auto recipientAddress = Address(tokenTransfer.recipient());
         tx.set_version(MAINNET_TRANSACTION_VERSION);
         tx.set_chainid(MAINNET_CHAIN_ID);
         if (std::find(ANCHORMODE.begin(), ANCHORMODE.end(), tokenTransfer.anchormode()) == ANCHORMODE.end()) {
-            throw std::exception();
-	}
+            throw std::invalid_argument("Invalid anchor mode");
+        }
         tx.set_anchormode(tokenTransfer.anchormode());
-	auto auth = tx.mutable_auth();
-	auth->set_authtype(AUTHTYPE_STANDARD);
-	auto spending = auth->mutable_spendingcondition()->mutable_single();
-	spending->set_hashmode(ADDRESSHASHMODE_SERIALIZEP2PKH);
-	spending->set_signer(&senderAddress.bytes[1], senderAddress.bytes.size() - 1);
-	spending->set_nonce(tokenTransfer.nonce());
-	spending->set_fee(tokenTransfer.fee());
-	spending->set_keyencoding(PUBKEYENCODING_COMPRESSED);
-	auto transfer = tx.mutable_payload()->mutable_transfer();
-	auto address = transfer->mutable_recipient()->mutable_standard()->mutable_address();
-	auto recipientAddress = Address(tokenTransfer.recipient());
-	address->set_version(recipientAddress.bytes[0]);
-	address->set_hash160(&recipientAddress.bytes[1], recipientAddress.bytes.size() - 1);
+        auto auth = tx.mutable_auth();
+        auth->set_authtype(AUTHTYPE_STANDARD);
+        auto spending = auth->mutable_spendingcondition()->mutable_single();
+        spending->set_hashmode(ADDRESSHASHMODE_SERIALIZEP2PKH);
+        spending->set_signer(&senderAddress.bytes[1], senderAddress.bytes.size() - 1);
+        spending->set_nonce(tokenTransfer.nonce());
+        spending->set_fee(tokenTransfer.fee());
+        spending->set_keyencoding(keyType == TWPublicKeyTypeSECP256k1 ? PUBKEYENCODING_COMPRESSED : PUBKEYENCODING_UNCOMPRESSED);
+        auto transfer = tx.mutable_payload()->mutable_transfer();
         transfer->set_payloadtype(PAYLOADTYPE_TOKENTRANSFER);
-	transfer->set_amount(tokenTransfer.amount());
-	auto memo = transfer->mutable_memo();
-	memo->set_content(tokenTransfer.memo());
+        transfer->set_amount(tokenTransfer.amount());
+        auto address = transfer->mutable_recipient()->mutable_standard()->mutable_address();
+        address->set_version(recipientAddress.bytes[0]);
+        address->set_hash160(&recipientAddress.bytes[1], recipientAddress.bytes.size() - 1);
+        auto memo = transfer->mutable_memo();
+        memo->set_content(tokenTransfer.memo());
     }
-    auto result = serialize(tx);
-    for (int i = 0; i < result.size(); i++)
-        std::cout << std::setfill('0') << std::setw(2) << std::hex << (int)result[i];
-    std::cout << std::endl;
-    return result;
+    else {
+        throw std::invalid_argument("Invalid input type");
+    }
+    return tx;
 }
+
+void Signer::sign(Proto::StacksTransaction& tx) const {
+    auto copyTx(tx);
+    auto auth = copyTx.mutable_auth();
+    if ((auth->authtype() != AUTHTYPE_STANDARD) || !auth->spendingcondition().has_single()) {
+        throw std::exception();
+    }
+    auto spending = auth->mutable_spendingcondition()->mutable_single();
+    spending->set_nonce(0);
+    spending->set_fee(0);
+    spending->mutable_signature()->set_data(std::string(RECOVERABLE_ECSDA_SIG_LENGTH_BYTES, 0x00));
+    auto encoded = serialize(copyTx);
+    auto sig = Hash::sha512_256(encoded);
+    sig.push_back(AUTHTYPE_STANDARD);
+    encode64BE(tx.auth().spendingcondition().single().fee(), sig);
+    encode64BE(tx.auth().spendingcondition().single().nonce(), sig);
+    auto newSig = Hash::sha512_256(sig);
+    auto [privateKey, keyType] = getKey();
+    auto result = privateKey.sign(newSig, TWCurveSECP256k1);
+    result.insert(result.begin(), result.back());
+    result.pop_back();
+    spending = tx.mutable_auth()->mutable_spendingcondition()->mutable_single();    
+    spending->mutable_signature()->set_data(&result[0], result.size());
+}
+
+Data Signer::sign() const noexcept {
+    auto tx = generate();
+    sign(tx);
+    return serialize(tx);
+}
+

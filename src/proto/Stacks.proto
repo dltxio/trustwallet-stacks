@@ -79,42 +79,22 @@ message StacksTransaction {
     Payload payload = 5;
 }
 
-message SignedTokenTransferOptions {
+message TokenTransferOptions {
     string recipient = 1;
     int64 amount = 2;
     int64 fee = 3;
     int64 nonce = 4;
     uint32 anchorMode = 5; // enum
     string memo = 6;
-    string senderKey = 7;
-}
-
-message ContractDeploy {
-    string contractName = 1;
-    bytes codeBody = 2;
-    string senderKey = 3;
-    string network = 4;
-    bytes anchorMode = 5;
-}
-
-message ContractCall {
-    string contractAddress = 1;
-    string contractName = 2;
-    string functionName = 3;
-    bytes functionArgs = 4;
-    string senderKey = 5;
-    bool validateWithAbi = 6;
-    string network = 7;
-    bytes postConditions = 8;
-    bytes anchorMode = 9;
 }
 
 // Input data necessary to create a signed transaction.
 message SigningInput {
+    oneof signer_oneof {
+        bytes senderKey = 1;
+    }
     oneof transaction_oneof {
-        SignedTokenTransferOptions tokenTransfer = 1;
-        ContractDeploy deploy = 2;
-        ContractCall call = 3;
+        TokenTransferOptions tokenTransfer = 10;
     }
 }
 
