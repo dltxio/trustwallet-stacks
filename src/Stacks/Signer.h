@@ -18,6 +18,12 @@ namespace TW::Stacks {
 /// Helper class that performs Stacks transaction signing.
 class Signer {
 public:
+    enum AnchorMode {
+        AnchorModeOnChainOnly = 0x01,
+	AnchorModeOffChainOnly = 0x02,
+	AnchorModeAny = 0x03
+    };
+
     /// Hide default constructor
     Signer() = delete;
 

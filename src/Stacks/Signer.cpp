@@ -40,10 +40,7 @@ static const auto POSTCONDITIONMODE_DENY = 0x02;
 static const auto PUBKEYENCODING_COMPRESSED = 0x00;
 static const auto PUBKEYENCODING_UNCOMPRESSED = 0x01;
 
-static const auto ANCHORMODE_ONCHAINONLY = 0x01;
-static const auto ANCHORMODE_OFFCHAINONLY = 0x02;
-static const auto ANCHORMODE_ANY = 0x03;
-static const auto ANCHORMODE = { ANCHORMODE_ONCHAINONLY, ANCHORMODE_OFFCHAINONLY, ANCHORMODE_ANY };
+static const auto ANCHORMODE = { Signer::AnchorModeOnChainOnly, Signer::AnchorModeOffChainOnly, Signer::AnchorModeAny };
 
 static void serialize(Data& data, const Proto::MessageSignature& signature) {
     auto sig = signature.data();

@@ -24,7 +24,7 @@ TEST(StacksSigner, signBasic) {
     auto transfer = input.mutable_tokentransfer();
     transfer->set_recipient("SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159");
     transfer->set_amount(100);
-    transfer->set_anchormode(3);
+    transfer->set_anchormode(Signer::AnchorModeAny);
 
     const auto signer = Signer(input);
 
@@ -42,7 +42,7 @@ TEST(StacksSigner, signWithFee) {
     transfer->set_amount(12345);
     transfer->set_fee(100);
     transfer->set_nonce(987654321);
-    transfer->set_anchormode(3);
+    transfer->set_anchormode(Signer::AnchorModeAny);
 
     const auto signer = Signer(input);
 
@@ -60,7 +60,7 @@ TEST(StacksSigner, signWithMemo) {
     transfer->set_amount(12345);
     transfer->set_fee(100);
     transfer->set_nonce(987654321);
-    transfer->set_anchormode(3);
+    transfer->set_anchormode(Signer::AnchorModeAny);
     transfer->set_memo("test memo");
 
     const auto signer = Signer(input);
@@ -94,7 +94,7 @@ TEST(StacksSigner, memoFail) {
     transfer->set_amount(12345);
     transfer->set_fee(100);
     transfer->set_nonce(10);
-    transfer->set_anchormode(3);
+    transfer->set_anchormode(Signer::AnchorModeAny);
     transfer->set_memo("this is a really long memo which should not be allowed");
 
     const auto signer = Signer(input);

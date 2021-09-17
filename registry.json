@@ -1722,7 +1722,7 @@
     "name": "Stacks",
     "coinId": 5757,
     "symbol": "STX",
-    "decimals": 8,
+    "decimals": 6,
     "blockchain": "Stacks",
     "derivationPath": "m/44'/5757'/0'/0/0",
     "curve": "secp256k1",
