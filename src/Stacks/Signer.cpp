@@ -124,6 +124,18 @@ static void serialize(Data& data, const Proto::StacksTransaction& transaction) {
     serialize(data, transaction.payload());
 }
 
+std::tuple<Data, std::string> Signer::sign() const noexcept {
+    try {
+        Data encoded;
+        auto tx = generate();
+        serialize(encoded, sign(tx));
+        return std::make_tuple(encoded, "");    
+    }
+    catch (std::exception& ex) {
+        return std::make_tuple(Data(), std::string(ex.what()));
+    }
+}
+
 Proto::SigningOutput Signer::sign(const Proto::SigningInput& input) noexcept {
     auto signer = Signer(input);
     auto output = Proto::SigningOutput();
@@ -208,17 +220,5 @@ Proto::StacksTransaction& Signer::sign(Proto::StacksTransaction& tx) const {
         throw std::invalid_argument("Invalid signing type");
     }
     return tx;
-}
-
-std::tuple<Data, std::string> Signer::sign() const noexcept {
-    try {
-        Data encoded;
-        auto tx = generate();
-        serialize(encoded, sign(tx));
-        return std::make_tuple(encoded, "");    
-    }
-    catch (std::exception& ex) {
-        return std::make_tuple(Data(), std::string(ex.what()));
-    }
 }
 

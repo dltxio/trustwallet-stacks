@@ -37,9 +37,9 @@ public:
 private:
     Proto::SigningInput input;
 
-    Proto::StacksTransaction generate() const;
-
     std::tuple<PrivateKey, TWPublicKeyType> senderKey() const;
+
+    Proto::StacksTransaction generate() const;
 
     Proto::StacksTransaction& sign(Proto::StacksTransaction& tx) const;
 };
