@@ -102,5 +102,8 @@ message SigningInput {
 message SigningOutput {
     // Signed and encoded transaction bytes.
     bytes encoded = 1;
+
+    // Non-empty string indicates signing has failed
+    string error = 2;
 }
 

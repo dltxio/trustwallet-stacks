@@ -17,20 +17,19 @@
 using namespace TW;
 using namespace TW::Stacks;
 
+static const auto PRIVATE_KEY_LENGTH = 32;
+
+static const auto RECOVERABLE_ECSDA_SIG_LENGTH_BYTES = 65;
+
+static const auto MEMO_MAX_LENGTH_BYTES = 34;
+
 static const auto MAINNET_TRANSACTION_VERSION = 0x00;
 
 static const auto MAINNET_CHAIN_ID = 0x01;
 
-static const auto ANCHORMODE_ONCHAINONLY = 0x01;
-static const auto ANCHORMODE_OFFCHAINONLY = 0x02;
-static const auto ANCHORMODE_ANY = 0x03;
-static const auto ANCHORMODE = { ANCHORMODE_ONCHAINONLY, ANCHORMODE_OFFCHAINONLY, ANCHORMODE_ANY };
-
 static const auto ADDRESSHASHMODE_SERIALIZEP2PKH = 0x00;
 
 static const auto AUTHTYPE_STANDARD = 0x04;
-
-static const auto MEMO_MAX_LENGTH_BYTES = 34;
 
 static const auto CLARITYTYPE_PRINCIPALSTANDARD = 0x05;
 
@@ -41,148 +40,107 @@ static const auto POSTCONDITIONMODE_DENY = 0x02;
 static const auto PUBKEYENCODING_COMPRESSED = 0x00;
 static const auto PUBKEYENCODING_UNCOMPRESSED = 0x01;
 
-static const auto RECOVERABLE_ECSDA_SIG_LENGTH_BYTES = 65;
+static const auto ANCHORMODE_ONCHAINONLY = 0x01;
+static const auto ANCHORMODE_OFFCHAINONLY = 0x02;
+static const auto ANCHORMODE_ANY = 0x03;
+static const auto ANCHORMODE = { ANCHORMODE_ONCHAINONLY, ANCHORMODE_OFFCHAINONLY, ANCHORMODE_ANY };
 
-static const auto PRIVATE_KEY_LENGTH = 32;
-
-Data serialize(const Proto::MessageSignature& signature) {
-    auto data = signature.data();
-    return Data(data.begin(), data.end());
+static void serialize(Data& data, const Proto::MessageSignature& signature) {
+    auto sig = signature.data();
+    data.insert(data.end(), sig.begin(), sig.end());
 }
 
-Data serialize(const Proto::SingleSigSpendingCondition& spending) {
-    Data data;
+static void serialize(Data& data, const Proto::SingleSigSpendingCondition& spending) {
     data.push_back(spending.hashmode());
     auto signer = spending.signer();
     data.insert(data.end(), signer.begin(), signer.end());
     encode64BE(spending.nonce(), data);
     encode64BE(spending.fee(), data);
     data.push_back(spending.keyencoding());
-    auto signature = serialize(spending.signature());
-    data.insert(data.end(), signature.begin(), signature.end());
-    return data;
+    serialize(data, spending.signature());
 }
 
-Data serialize(const Proto::SpendingCondition& spending) {
+static void serialize(Data& data, const Proto::SpendingCondition& spending) {
     if (!spending.has_single()) {
-        throw std::exception(); // !!
+        throw std::invalid_argument("Invalid spending condition"); 
     }
-    return serialize(spending.single());
+    serialize(data, spending.single());
 }
 
-Data serialize(const Proto::Authorization& auth) {
-    Data data;
+static void serialize(Data& data, const Proto::Authorization& auth) {
     if (auth.authtype() != AUTHTYPE_STANDARD) {
-        throw std::exception();
+        throw std::invalid_argument("Invalid authorization type");
     }
     data.push_back(auth.authtype());
-    auto spendingCondition = serialize(auth.spendingcondition());
-    data.insert(data.end(), spendingCondition.begin(), spendingCondition.end());
-    return data;
+    serialize(data, auth.spendingcondition());
 }
 
-Data serialize(const Proto::Address& addr) {
-    Data data;
+static void serialize(Data& data, const Proto::Address& addr) {
     data.push_back(addr.version());
     auto hash = addr.hash160();
     data.insert(data.end(), hash.begin(), hash.end());
-    return data;
 }
 
-Data serialize(const Proto::StandardPrincipalCV& cv) {
-    Data data;
+static void serialize(Data& data, const Proto::StandardPrincipalCV& cv) {
     data.push_back(CLARITYTYPE_PRINCIPALSTANDARD);
-    auto addr = serialize(cv.address());
-    data.insert(data.end(), addr.begin(), addr.end());
-    return data;
+    serialize(data, cv.address());
 }
 
-Data serialize(const Proto::ContractPrincipalCV& cv) {
-    return {};
+static void serialize(Data& data, const Proto::PrincipalCV& cv) {
+    if (!cv.has_standard()) {
+        throw std::invalid_argument("Invalid principal");
+    }
+    serialize(data, cv.standard());
 }
 
-Data serialize(const Proto::PrincipalCV& cv) {
-    Data data;
-    if (cv.has_standard()) {
-        auto standard = serialize(cv.standard());
-        data.insert(data.end(), standard.begin(), standard.end());
-    }
-    else if (cv.has_contract()) {
-        auto contract = serialize(cv.contract());
-	data.insert(data.end(), contract.begin(), contract.end());
-    }
-    else {
-        throw std::exception();
-    }
-    return data;
-}
-
-Data serialize(const Proto::MemoString& memo) {
-    Data data(MEMO_MAX_LENGTH_BYTES);
+static void serialize(Data& data, const Proto::MemoString& memo) {
     auto content = memo.content();
-    if (content.size() > data.size()) {
-        throw std::exception();
+    if (content.size() > MEMO_MAX_LENGTH_BYTES) {
+        throw std::invalid_argument("Invalid length for memo");
     }
-    std::copy(content.begin(), content.end(), data.begin());
-    return data;
+    data.insert(data.end(), content.begin(), content.end());
+    auto pad = std::string(MEMO_MAX_LENGTH_BYTES - content.size(), '\0');
+    data.insert(data.end(), pad.begin(), pad.end());
 }
 
-Data serialize(const Proto::TokenTransferPayload& transfer) {
-    Data data;
+static void serialize(Data& data, const Proto::TokenTransferPayload& transfer) {
     data.push_back(PAYLOADTYPE_TOKENTRANSFER);
-    auto recipient = serialize(transfer.recipient());
-    data.insert(data.end(), recipient.begin(), recipient.end());
+    serialize(data, transfer.recipient());
     encode64BE(transfer.amount(), data);
-    auto memo = serialize(transfer.memo());
-    data.insert(data.end(), memo.begin(), memo.end());
-    return data;
+    serialize(data, transfer.memo());
 }
 
-Data serialize(const Proto::Payload& payload) {
-    Data data;
-    if (payload.has_transfer()) {
-        auto transfer = serialize(payload.transfer());
-	data.insert(data.end(), transfer.begin(), transfer.end());
+static void serialize(Data& data, const Proto::Payload& payload) {
+    if (!payload.has_transfer()) {
+        throw std::invalid_argument("Invalid payload");
     }
-    else {
-        throw std::exception();
-    }
-    return data;
+    serialize(data, payload.transfer());
 }
 
-Data serialize(const Proto::StacksTransaction& transaction) {
-    Data data;
+static void serialize(Data& data, const Proto::StacksTransaction& transaction) {
     data.push_back(transaction.version());
     encode32BE(transaction.chainid(), data);
-    auto auth = serialize(transaction.auth());
-    data.insert(data.end(), auth.begin(), auth.end());
+    serialize(data, transaction.auth());
     data.push_back(transaction.anchormode());
     data.push_back(POSTCONDITIONMODE_DENY);
     encode32BE(0, data); // no items in post-condition list
-    auto payload = serialize(transaction.payload());
-    data.insert(data.end(), payload.begin(), payload.end());
-    return data;
+    serialize(data, transaction.payload());
 }
 
 Proto::SigningOutput Signer::sign(const Proto::SigningInput& input) noexcept {
     auto signer = Signer(input);
     auto output = Proto::SigningOutput();
-    auto data = signer.sign();
-    output.set_encoded(&data[0], data.size());
+    auto [encoded, error] = signer.sign();
+    output.set_encoded(&encoded[0], encoded.size());
+    output.set_error(error);
     return output;
 }
 
-void dump(const Data& data) {
-    for (int i = 0; i < data.size(); i++)
-        std::cout << std::setfill('0') << std::setw(2) << std::hex << (int)data[i];
-    std::cout << std::endl;
-}
-
-std::tuple<PrivateKey, TWPublicKeyType> Signer::getKey() const {
+std::tuple<PrivateKey, TWPublicKeyType> Signer::senderKey() const {
     auto senderKey = input.senderkey();
-    auto keyType = TWPublicKeyTypeSECP256k1;
+    auto keyType = TWPublicKeyTypeSECP256k1Extended;
     if ((senderKey.size() == (PRIVATE_KEY_LENGTH + 1)) && (senderKey.back() == 0x01)) {
-        keyType = TWPublicKeyTypeSECP256k1Extended;
+        keyType = TWPublicKeyTypeSECP256k1;
         senderKey.pop_back();
     }
     else if (senderKey.size() != PRIVATE_KEY_LENGTH) {
@@ -195,8 +153,8 @@ Proto::StacksTransaction Signer::generate() const {
     Proto::StacksTransaction tx;
     if (input.has_tokentransfer()) {
         auto tokenTransfer = input.tokentransfer();
-        auto[privateKey, keyType] = getKey();
-        auto senderAddress = Address(privateKey.getPublicKey(keyType));
+        auto[key, keyType] = senderKey();
+        auto senderAddress = Address(key.getPublicKey(keyType));
         auto recipientAddress = Address(tokenTransfer.recipient());
         tx.set_version(MAINNET_TRANSACTION_VERSION);
         tx.set_chainid(MAINNET_CHAIN_ID);
@@ -227,33 +185,43 @@ Proto::StacksTransaction Signer::generate() const {
     return tx;
 }
 
-void Signer::sign(Proto::StacksTransaction& tx) const {
+Proto::StacksTransaction& Signer::sign(Proto::StacksTransaction& tx) const {
     auto copyTx(tx);
     auto auth = copyTx.mutable_auth();
-    if ((auth->authtype() != AUTHTYPE_STANDARD) || !auth->spendingcondition().has_single()) {
-        throw std::exception();
+    if ((auth->authtype() == AUTHTYPE_STANDARD) && auth->spendingcondition().has_single()) {
+        auto spending = auth->mutable_spendingcondition()->mutable_single();
+        spending->set_nonce(0);
+        spending->set_fee(0);
+        spending->mutable_signature()->set_data(std::string(RECOVERABLE_ECSDA_SIG_LENGTH_BYTES, 0x00));
+        Data encoded;
+        serialize(encoded, copyTx);
+        auto sigHash = Hash::sha512_256(encoded);
+        sigHash.push_back(AUTHTYPE_STANDARD);
+        encode64BE(tx.auth().spendingcondition().single().fee(), sigHash);
+        encode64BE(tx.auth().spendingcondition().single().nonce(), sigHash);
+        sigHash = Hash::sha512_256(sigHash);
+        auto [key, _] = senderKey();
+        auto signature = key.sign(sigHash, TWCurveSECP256k1);
+        signature.insert(signature.begin(), signature.back());
+        signature.pop_back();
+        spending = tx.mutable_auth()->mutable_spendingcondition()->mutable_single();    
+        spending->mutable_signature()->set_data(&signature[0], signature.size());
     }
-    auto spending = auth->mutable_spendingcondition()->mutable_single();
-    spending->set_nonce(0);
-    spending->set_fee(0);
-    spending->mutable_signature()->set_data(std::string(RECOVERABLE_ECSDA_SIG_LENGTH_BYTES, 0x00));
-    auto encoded = serialize(copyTx);
-    auto sig = Hash::sha512_256(encoded);
-    sig.push_back(AUTHTYPE_STANDARD);
-    encode64BE(tx.auth().spendingcondition().single().fee(), sig);
-    encode64BE(tx.auth().spendingcondition().single().nonce(), sig);
-    auto newSig = Hash::sha512_256(sig);
-    auto [privateKey, keyType] = getKey();
-    auto result = privateKey.sign(newSig, TWCurveSECP256k1);
-    result.insert(result.begin(), result.back());
-    result.pop_back();
-    spending = tx.mutable_auth()->mutable_spendingcondition()->mutable_single();    
-    spending->mutable_signature()->set_data(&result[0], result.size());
+    else {
+        throw std::invalid_argument("Invalid signing type");
+    }
+    return tx;
 }
 
-Data Signer::sign() const noexcept {
-    auto tx = generate();
-    sign(tx);
-    return serialize(tx);
+std::tuple<Data, std::string> Signer::sign() const noexcept {
+    try {
+        Data encoded;
+        auto tx = generate();
+        serialize(encoded, sign(tx));
+        return std::make_tuple(encoded, "");    
+    }
+    catch (std::exception& ex) {
+        return std::make_tuple(Data(), std::string(ex.what()));
+    }
 }
 

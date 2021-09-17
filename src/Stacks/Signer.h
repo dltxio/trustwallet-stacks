@@ -10,6 +10,7 @@
 #include "../PrivateKey.h"
 #include "../proto/Stacks.pb.h"
 
+#include <string>
 #include <tuple>
 
 namespace TW::Stacks {
@@ -22,7 +23,7 @@ public:
 
     explicit Signer(const Proto::SigningInput& input): input(input) {}
 
-    TW::Data sign() const noexcept;
+    std::tuple<TW::Data, std::string> sign() const noexcept;
 
     /// Signs a Proto::SigningInput transaction
     static Proto::SigningOutput sign(const Proto::SigningInput& input) noexcept;
@@ -32,9 +33,9 @@ private:
 
     Proto::StacksTransaction generate() const;
 
-    std::tuple<PrivateKey, TWPublicKeyType> getKey() const;
+    std::tuple<PrivateKey, TWPublicKeyType> senderKey() const;
 
-    void sign(Proto::StacksTransaction& tx) const;
+    Proto::StacksTransaction& sign(Proto::StacksTransaction& tx) const;
 };
 
 } // namespace TW::Stacks
