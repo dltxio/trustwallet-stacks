@@ -8,11 +8,11 @@ message MessageSignature {
 }
 
 message SingleSigSpendingCondition {
-    uint32 hashMode = 1; // enum
+    uint32 hashMode = 1;
     bytes signer = 2;
     uint64 nonce = 3;
     uint64 fee = 4;
-    uint32 keyEncoding = 5; // enum
+    uint32 keyEncoding = 5;
     MessageSignature signature = 6;
 }
 
@@ -23,7 +23,7 @@ message SpendingCondition {
 }
 
 message Authorization {
-    uint32 authType = 1; // enum equal to AuthType.Standard
+    uint32 authType = 1;
     SpendingCondition spendingCondition = 2;
 }
 
@@ -42,15 +42,9 @@ message StandardPrincipalCV {
     Address address = 1;
 }
 
-message ContractPrincipalCV {
-    Address address = 1;
-    LengthPrefixedString contractName = 2;
-}
-
 message PrincipalCV {
     oneof cv_oneof {
         StandardPrincipalCV standard = 1;
-        ContractPrincipalCV contract = 2;
     }
 }
 
@@ -59,7 +53,7 @@ message MemoString {
 }
 
 message TokenTransferPayload {
-    uint32 payloadType = 1; // enum equal to PayloadType.TokenTransfer
+    uint32 payloadType = 1; 
     PrincipalCV recipient = 2;
     int64 amount = 3;
     MemoString memo = 4;
@@ -72,19 +66,19 @@ message Payload {
 }
 
 message StacksTransaction {
-    uint32 version = 1; // enum
-    uint32 chainId = 2; // enum
+    uint32 version = 1;
+    uint32 chainId = 2;
     Authorization auth = 3;
-    uint32 anchorMode = 4; // enum
+    uint32 anchorMode = 4;
     Payload payload = 5;
 }
 
 message TokenTransferOptions {
     string recipient = 1;
-    int64 amount = 2;
+    int64 amount = 2; // In microstacks
     int64 fee = 3;
     int64 nonce = 4;
-    uint32 anchorMode = 5; // enum
+    uint32 anchorMode = 5;
     string memo = 6;
 }
 
@@ -103,7 +97,7 @@ message SigningOutput {
     // Signed and encoded transaction bytes.
     bytes encoded = 1;
 
-    // Non-empty string indicates signing has failed
+    // Non-empty string indicates signing has failed.
     string error = 2;
 }
 
