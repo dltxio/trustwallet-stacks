@@ -1,4 +1,4 @@
-// Copyright © 2017-2021 Trust Wallet.
+// Copyright © 2017-2020 Trust Wallet.
 //
 // This file is part of Trust. The full Trust copyright notice, including
 // terms governing use, modification, and redistribution, is contained in the
@@ -15,20 +15,20 @@
 
 TEST(TWStacksCoinType, TWCoinType) {
     auto symbol = WRAPS(TWCoinTypeConfigurationGetSymbol(TWCoinTypeStacks));
-    auto txId = WRAPS(TWStringCreateWithUTF8Bytes("65f89adcacd272f07d198e09d5c9da8a749dd84e3b7f3c95118ce8858e359b3d"));
+    auto txId = WRAPS(TWStringCreateWithUTF8Bytes("fc57e27f8b631f1df3aeb47241309a4b90f8574f234b3b13a61637d5b7a7b6d0"));
     auto txUrl = WRAPS(TWCoinTypeConfigurationGetTransactionURL(TWCoinTypeStacks, txId.get()));
-    auto accId = WRAPS(TWStringCreateWithUTF8Bytes("SP30EF9XFSX2XC5BH2KJ6EQAP6RPX71JC1K5RQ0N2"));
+    auto accId = WRAPS(TWStringCreateWithUTF8Bytes("SP19TEDPGHNPAA3M4KSH9V3EZ3M7E5H89RMRZQH8A"));
     auto accUrl = WRAPS(TWCoinTypeConfigurationGetAccountURL(TWCoinTypeStacks, accId.get()));
     auto id = WRAPS(TWCoinTypeConfigurationGetID(TWCoinTypeStacks));
     auto name = WRAPS(TWCoinTypeConfigurationGetName(TWCoinTypeStacks));
 
-    ASSERT_EQ(TWCoinTypeConfigurationGetDecimals(TWCoinTypeStacks), 8);
+    ASSERT_EQ(TWCoinTypeConfigurationGetDecimals(TWCoinTypeStacks), 6);
     ASSERT_EQ(TWBlockchainStacks, TWCoinTypeBlockchain(TWCoinTypeStacks));
     ASSERT_EQ(0x0, TWCoinTypeP2shPrefix(TWCoinTypeStacks));
     ASSERT_EQ(0x0, TWCoinTypeStaticPrefix(TWCoinTypeStacks));
     assertStringsEqual(symbol, "STX");
-    assertStringsEqual(txUrl, "https://explorer.stacks.co/txid/65f89adcacd272f07d198e09d5c9da8a749dd84e3b7f3c95118ce8858e359b3d");
-    assertStringsEqual(accUrl, "https://explorer.stacks.co/address/SP30EF9XFSX2XC5BH2KJ6EQAP6RPX71JC1K5RQ0N2");
+    assertStringsEqual(txUrl, "https://explorer.stacks.co/txid/fc57e27f8b631f1df3aeb47241309a4b90f8574f234b3b13a61637d5b7a7b6d0");
+    assertStringsEqual(accUrl, "https://explorer.stacks.co/address/SP19TEDPGHNPAA3M4KSH9V3EZ3M7E5H89RMRZQH8A");
     assertStringsEqual(id, "stacks");
     assertStringsEqual(name, "Stacks");
 }
