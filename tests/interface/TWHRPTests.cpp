@@ -98,6 +98,7 @@ TEST(TWHPR, HPRByCoinType) {
     ASSERT_EQ(TWHRPUnknown, TWCoinTypeHRP(TWCoinTypeOntology));
     ASSERT_EQ(TWHRPUnknown, TWCoinTypeHRP(TWCoinTypePOANetwork));
     ASSERT_EQ(TWHRPUnknown, TWCoinTypeHRP(TWCoinTypeXRP));
+    ASSERT_EQ(TWHRPUnknown, TWCoinTypeHRP(TWCoinTypeStacks));
     ASSERT_EQ(TWHRPUnknown, TWCoinTypeHRP(TWCoinTypeStellar));
     ASSERT_EQ(TWHRPUnknown, TWCoinTypeHRP(TWCoinTypeTezos));
     ASSERT_EQ(TWHRPUnknown, TWCoinTypeHRP(TWCoinTypeTheta));
