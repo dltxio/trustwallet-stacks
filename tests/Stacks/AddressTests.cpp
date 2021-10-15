@@ -18,6 +18,9 @@ using namespace TW::Stacks;
 
 TEST(StacksAddress, Valid) {
     ASSERT_TRUE(Address::isValid("SP2PP2BSNVJV56CFRQFEMC5VA2X44ZBKMZAC4BWZ9"));
+    ASSERT_TRUE(Address::isValid("SP2DFJSC3I9XOWlVMPJA65XGC7DOTDKEM9DSHV44S")); // replace '0', '1' with 'O', 'I' and 'l'  
+    ASSERT_TRUE(Address::isValid("SP2DFJSC3I9XOWlVMPJA65XGC7DOTDKEM9DSHV44S", { 22 }));
+    ASSERT_TRUE(Address::isValid("ST2PP2BSNVJV56CFRQFEMC5VA2X44ZBKMZ9204TY5", { 26 }));
 }
 
 TEST(StacksAddress, Invalid) {
@@ -25,6 +28,7 @@ TEST(StacksAddress, Invalid) {
     ASSERT_FALSE(Address::isValid("SP2PP2BSNVKV56CFRQFEMC5VA2X44ZBKMZAC4BWZ9")); // Modify address
     ASSERT_FALSE(Address::isValid("SP2PP2BSNVJV56CFRQFEMC5VA2X44ZBKMZAC4BWZ0")); // Modify checksum
     ASSERT_FALSE(Address::isValid("SP2PP2BSNVJV56CFRQFEMC5VA2X44ZBKMZAC4BWZ"));  // Short address
+    ASSERT_FALSE(Address::isValid("SP2DFJSC3I9XOWlVMPJA65XGC7DOTDKEM9DSHV44S", { 20, 21, 26 })); // Prefix not in valid list
 }
 
 TEST(StacksAddress, FromPrivateKey) {
