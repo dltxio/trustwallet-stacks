@@ -28,7 +28,7 @@ RUN apt-get update \
         clang-10 \
         llvm-10 \
         libc++-dev libc++abi-dev \
-        cmake \        
+        cmake \ 
         libboost1.74-dev \
         ccache \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -38,9 +38,8 @@ ENV CXX=/usr/bin/clang++-10
 
 # ↑ Setup build environment
 # ↓ Build and compile wallet core
-
-RUN git clone https://github.com/trustwallet/wallet-core.git
 WORKDIR /wallet-core
+COPY . .
 
 # Install dependencies
 RUN tools/install-dependencies
